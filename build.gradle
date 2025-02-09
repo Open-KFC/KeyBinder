@@ -1,0 +1,136 @@
+import net.minecraftforge.gradle.tasks.DownloadAssetsTask
+import sun.misc.SharedSecrets
+import sun.misc.Unsafe
+
+buildscript {
+    repositories {
+        jcenter()
+        maven { url = 'https://maven.aliyun.com/repository/public/' }
+        maven { url = "http://files.minecraftforge.net/maven" }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:2.3-SNAPSHOT'
+    }
+}
+
+//plugins {
+//    id 'org.jetbrains.kotlin.jvm' version '1.2.71'
+//}
+
+apply plugin: 'net.minecraftforge.gradle.forge'
+
+//repositories {
+//    maven { url = 'https://maven.shadowfacts.net/' }
+//    maven { url "https://cursemaven.com" }
+//}
+
+version = "0.1.0"
+group = "com.openkfc.keybinder"
+archivesBaseName = "KeyBinder"
+
+void initConstantPool(Class<?> clazz) {
+    if (clazz != null && !clazz.interface) {
+        initConstantPool clazz.superclass
+
+        def constantPool = SharedSecrets.javaLangAccess.getConstantPool clazz
+        for (i in 0..constantPool.size) {
+            try {
+                constantPool.getStringAt i
+            } catch (def ignored) {
+            }
+        }
+    }
+}
+
+void replaceString(String str1, String str2) {
+    String.class.getDeclaredField "value" with {
+        it.setAccessible true
+        it.set str1, str2.toCharArray()
+    }
+}
+
+initConstantPool Unsafe.theUnsafe.allocateInstance(DownloadAssetsTask.GetAssetTask.class).class
+replaceString "http://resources.download.minecraft.net/", "https://resources.download.minecraft.net/"
+
+sourceCompatibility = targetCompatibility = '1.8'
+compileJava {
+    sourceCompatibility = targetCompatibility = '1.8'
+}
+
+minecraft {
+    version = "1.12.2-14.23.5.2768"
+    runDir = "run"
+    mappings = "snapshot_20171003"
+//    at(file('src/main/resources/META-INF/example_at.cfg'))
+}
+
+dependencies {
+//    implementation 'net.shadowfacts:Forgelin:1.8.4'
+}
+
+processResources {
+    inputs.property "version", project.version
+    inputs.property "mcversion", project.minecraft.version
+    from(sourceSets.main.resources.srcDirs) {
+        include 'mcmod.info'
+        expand 'version': project.version, 'mcversion': project.minecraft.version
+    }
+    from(sourceSets.main.resources.srcDirs) {
+        exclude 'mcmod.info'
+    }
+}
+
+sourceSets {
+    main {
+        output.resourcesDir = file('build/combined')
+        java.outputDir = file('build/combined')
+    }
+}
+
+jar {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    finalizedBy reobfJar
+}
+
+tasks.genIntellijRuns.doFirst {
+    def workspaceFile = file(".idea/workspace.xml")
+    workspaceFile.parentFile.mkdirs()
+    if (!workspaceFile.exists()) {
+        workspaceFile.write("""\
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+            <component name="RunManager">
+            </component>
+        </project>
+        """.stripIndent())
+    } else {
+        def workspace = new XmlParser().parse(workspaceFile)
+        def runManager = workspace.component.findAll({ it.@name == "RunManager" })
+        if (runManager.size() == 0) {
+            workspace.appendNode("component", ["name": "RunManager"])
+        } else {
+            runManager.each {
+                it.configuration.findAll({ it.@name == "Minecraft Client" || it.@name == "Minecraft Server" }).each { configuration ->
+                    it.remove(configuration)
+                }
+            }
+        }
+        new PrintWriter(new FileWriter(workspaceFile)).withCloseable {
+            new XmlNodePrinter(it).print(workspace)
+        }
+    }
+}
+
+tasks.genIntellijRuns.doLast {
+    def workspaceFile = file(".idea/workspace.xml")
+    def workspace = new XmlParser().parse(workspaceFile)
+    workspace.component.findAll({ it.@name == "RunManager" }).each {
+        it.configuration.findAll({ it.@name == "Minecraft Client" || it.@name == "Minecraft Server" }).each {
+            // https://github.com/MinecraftForge/ForgeGradle/blob/FG_2.3/src/main/java/net/minecraftforge/gradle/user/UserBasePlugin.java#L1325
+            it.module.@name = project.idea.module.name + '.' + project.minecraft.runSourceSet.name
+        }
+    }
+    new PrintWriter(new FileWriter(workspaceFile)).withCloseable {
+        new XmlNodePrinter(it).print(workspace)
+    }
+}

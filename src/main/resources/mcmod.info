@@ -1,0 +1,16 @@
+[
+{
+  "modid": "keybinder",
+  "name": "KeyBinder",
+  "description": "",
+  "version": "${version}",
+  "mcversion": "${mcversion}",
+  "url": "",
+  "updateUrl": "",
+  "authorList": ["OpenKFC"],
+  "credits": "",
+  "logoFile": "",
+  "screenshots": [],
+  "dependencies": []
+}
+]
