@@ -26,8 +26,6 @@ public final class LineKeyButtonGenerator {
         this.outList = outList;
     }
 
-    public int getCurrentX() {return currentX;}
-
     public void generate(int keyCode) {
         generateWG(keyCode, keyScale, keyGap);
     }
@@ -42,6 +40,11 @@ public final class LineKeyButtonGenerator {
 
     public void generateWG(int keyCode, int width, int gap) {
         outList.add(new KeyButton(screen, keyCode, currentX, y, width, keyScale, keyCodeToStr(keyCode)));
+        currentX += width + gap;
+    }
+
+    public void generateWHG(int keyCode, int width, int height, int gap) {
+        outList.add(new KeyButton(screen, keyCode, currentX, y, width, height, keyCodeToStr(keyCode)));
         currentX += width + gap;
     }
 

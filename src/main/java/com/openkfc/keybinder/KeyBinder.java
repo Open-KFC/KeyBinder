@@ -1,12 +1,13 @@
 package com.openkfc.keybinder;
 
 import com.openkfc.keybinder.gui.GuiControlsKB;
-import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiControls;
+import net.minecraftforge.client.event.GuiOpenEvent;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLInitializationEvent;
+import net.minecraftforge.fml.common.eventhandler.EventPriority;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.InputEvent;
 
 import static com.openkfc.keybinder.KeyBinder.*;
 
@@ -25,11 +26,10 @@ public class KeyBinder {
         MinecraftForge.EVENT_BUS.register(getClass());
     }
 
-    @SubscribeEvent
-    public static void onKeyInput(InputEvent.KeyInputEvent event) {
-        if (Minecraft.getMinecraft().gameSettings.keyBindSwapHands.isKeyDown()) {
-            Minecraft.getMinecraft().displayGuiScreen(new GuiControlsKB());
-        }
+    @SubscribeEvent(priority = EventPriority.HIGH)
+    public static void onGuiOpen(GuiOpenEvent event) {
+        if (event.getGui().getClass() == GuiControls.class)
+            event.setGui(new GuiControlsKB());
     }
 
 }

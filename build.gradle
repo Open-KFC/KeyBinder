@@ -61,7 +61,7 @@ minecraft {
     version = "1.12.2-14.23.5.2768"
     runDir = "run"
     mappings = "snapshot_20171003"
-//    at(file('src/main/resources/META-INF/example_at.cfg'))
+//    at(file('src/main/resources/META-INF/keybinder_at.cfg'))
 }
 
 dependencies {
@@ -89,6 +89,9 @@ sourceSets {
 
 jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+//    manifest {
+//        attributes 'FMLAT': 'keybinder_at.cfg'
+//    }
     finalizedBy reobfJar
 }
 
