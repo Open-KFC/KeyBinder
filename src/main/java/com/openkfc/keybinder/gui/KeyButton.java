@@ -70,7 +70,7 @@ public class KeyButton extends GuiButton {
         for (KeyBinding kb : relatedKeyBindings)
             keyBindingsNames.add(displayNameOf(kb));
         if (!keyBindingsNames.isEmpty()) {
-            keyBindingsNames.add(0, TextFormatting.GOLD + "Related KeyBindings"); //TODO: I18n
+            keyBindingsNames.add(0, TextFormatting.GOLD + I18n.format("controlskb.related_keybindings"));
             backgroundColor = hasConflictBinding(relatedKeyBindings) ? 0xFFFF3C10 : 0xFF3C10FF;
         } else {
             backgroundColor = 0xFFAFAFAF;

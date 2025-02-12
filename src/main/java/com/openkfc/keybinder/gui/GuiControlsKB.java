@@ -73,21 +73,19 @@ public class GuiControlsKB extends GuiScreen {
 
     protected void initButtons() {
         //TODO: display reset btn and undo btn as disabled
-        //TODO: I18n
         int btnWidth = (width - 70) / 3;
         int[] aX = new int[]{30, 30 + btnWidth + 5, 30 + 2 * (btnWidth + 5)};
         int[] aY = new int[]{height - 29, height - 54};
         addButton(new GuiButton(10000, aX[0], aY[0], I18n.format("controls.resetAll"))).setWidth(btnWidth);
-        addButton(new GuiButton(10001, aX[1], aY[0], "Undo")).setWidth(btnWidth);
+        addButton(new GuiButton(10001, aX[1], aY[0], I18n.format("controlskb.undo"))).setWidth(btnWidth);
         addButton(new GuiButton(10003, aX[2], aY[0], I18n.format("gui.done"))).setWidth(btnWidth);
-        addButton(new GuiButton(10004, aX[0], aY[1], "Other Settings")).setWidth(btnWidth);
-        addButton(new GuiButton(10005, aX[1], aY[1], "Other Keys")).setWidth(btnWidth);
-        addButton(new GuiButton(10006, aX[2], aY[1], "Show KeyBindings")).setWidth(btnWidth);
+        addButton(new GuiButton(10004, aX[0], aY[1], I18n.format("controlskb.other_settings"))).setWidth(btnWidth);
+        addButton(new GuiButton(10005, aX[1], aY[1], I18n.format("controlskb.other_keys"))).setWidth(btnWidth);
+        addButton(new GuiButton(10006, aX[2], aY[1], I18n.format("controlskb.show_keybindings"))).setWidth(btnWidth);
     }
 
     protected void initTextField() {
-        //TODO: I18n
-        bindingSearchText = "Search KeyBinding";
+        bindingSearchText = I18n.format("controlskb.search_keybinding");
         int fieldX = bindingSearchTextX + fontRenderer.getStringWidth(bindingSearchText) + 10;
         int fieldW = width - 30 - fieldX;
         String lastFieldText;
