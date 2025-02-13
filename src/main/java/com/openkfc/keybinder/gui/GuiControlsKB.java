@@ -22,6 +22,7 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -147,12 +148,15 @@ public class GuiControlsKB extends GuiScreen {
 
     @Override protected void actionPerformed(@SuppressWarnings("NullableProblems") GuiButton button) {
         if (button instanceof KeyButton) {
-            int keyCode = button.id;
-            mc.displayGuiScreen(new GuiKeyBindingEdit(
-                    this,
-                    () -> I18n.format("controls.title") + " > " + GameSettings.getKeyDisplayString(keyCode) + " <",
-                    ((KeyButton) button).relatedKeyBindings
-            ));
+            List<KeyBinding> related = ((KeyButton) button).relatedKeyBindings;
+            if (!related.isEmpty()) {
+                int keyCode = button.id;
+                mc.displayGuiScreen(new GuiKeyBindingEdit(
+                        this,
+                        () -> I18n.format("controls.title") + " > " + GameSettings.getKeyDisplayString(keyCode) + " <",
+                        related
+                ));
+            }
             return;
         }
         switch (button.id) {
