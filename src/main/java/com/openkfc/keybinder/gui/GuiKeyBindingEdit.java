@@ -95,8 +95,8 @@ public class GuiKeyBindingEdit extends GuiScreen /*implements MyKeyBindingList.I
                     if (containsIgnoreCase(I18n.format(kb.getKeyDescription()), text)
                             || containsIgnoreCase(I18n.format(kb.getKeyCategory()), text))
                         listContent.add(kb);
-            } //TODO: don't new MyKeyBindingList, but add a method setContents in that class and call it
-            keyBindingList = new MyKeyBindingList(mc, listContent, width + 45, height, 50, height - 32);
+            }
+            keyBindingList.initEntries(listContent);
         } else if (!keyBindingList.keyTyped(typedChar, keyCode)) {
             if (keyCode == Keyboard.KEY_ESCAPE)
                 quitScreen();

@@ -12,8 +12,8 @@ import org.lwjgl.input.Keyboard;
 import java.util.*;
 
 public class MyKeyBindingList extends GuiListExtended {
-    protected List<KeyBinding> keyBindings;
-    protected final IGuiListEntry[] entries;
+    protected List<KeyBinding> keyBindings = new ArrayList<>();
+    protected IGuiListEntry[] entries;
     protected int maxLabelTextWidth;
     protected KeyBinding selectingKeyBinding;
 
@@ -22,17 +22,19 @@ public class MyKeyBindingList extends GuiListExtended {
             int widthIn, int heightIn, int topIn, int bottomIn
     ) {
         super(mcIn, widthIn, heightIn, topIn, bottomIn, 20);
-        keyBindings = new ArrayList<>();
+        initEntries(keyBindingsIn);
+    }
+
+    public void initEntries(Collection<? extends KeyBinding> keyBindingsIn) {
+        keyBindings.clear();
         keyBindings.addAll(keyBindingsIn);
         keyBindings.sort(KeyBinding::compareTo);
         List<IGuiListEntry> entryList = new ArrayList<>();
         String curCatrgory = null;
         for (KeyBinding kb : keyBindings) {
             String category = kb.getKeyCategory();
-            if (!Objects.equals(category, curCatrgory)) {
-                curCatrgory = category;
-                entryList.add(new CategoryEntry(category));
-            }
+            if (!Objects.equals(category, curCatrgory))
+                entryList.add(new CategoryEntry(curCatrgory = category));
             int strWidth = mc.fontRenderer.getStringWidth(I18n.format(kb.getKeyDescription()));
             if (strWidth > maxLabelTextWidth)
                 maxLabelTextWidth = strWidth;
