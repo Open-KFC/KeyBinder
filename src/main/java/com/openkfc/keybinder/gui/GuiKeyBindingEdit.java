@@ -17,7 +17,7 @@ import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 /**
  * GuiScreen with title + search box + key binding edit list + 'done' button
  */
-public class GuiKeyBindingEdit extends GuiScreen /*implements MyKeyBindingList.IKeyBindingListContainer*/ {
+public class GuiKeyBindingEdit extends GuiScreen {
     protected GuiScreen parentScreen;
     protected String screenTitle = "Controls";
     protected Supplier<String> titleStrSupplier;
@@ -72,10 +72,15 @@ public class GuiKeyBindingEdit extends GuiScreen /*implements MyKeyBindingList.I
     }
 
     @Override protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        if (!keyBindingList.mouseClicked(mouseX, mouseY, mouseButton)) {
-            super.mouseClicked(mouseX, mouseY, mouseButton);
+        if (bindingSearchField.isFocused()) {
             bindingSearchField.mouseClicked(mouseX, mouseY, mouseButton);
+            return;
         }
+        if (keyBindingList.mouseClicked(mouseX, mouseY, mouseButton))
+            return;
+        if (bindingSearchField.mouseClicked(mouseX, mouseY, mouseButton))
+            return;
+        super.mouseClicked(mouseX, mouseY, mouseButton);
     }
 
     @Override protected void mouseReleased(int mouseX, int mouseY, int state) {
