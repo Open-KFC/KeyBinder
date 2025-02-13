@@ -5,26 +5,24 @@ import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
-import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.input.Keyboard;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
 
 import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
 
 /**
  * GuiScreen with title + search box + key binding edit list + 'done' button
  */
-public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKeyBindingListContainer {
+public class GuiKeyBindingEdit extends GuiScreen /*implements MyKeyBindingList.IKeyBindingListContainer*/ {
     protected GuiScreen parentScreen;
     protected String screenTitle = "Controls";
     protected Supplier<String> titleStrSupplier;
     protected List<KeyBinding> contents;
     protected MyKeyBindingList keyBindingList;
-    protected KeyBinding selectingKeyBinding;
     protected String bindingSearchText;
     protected int bindingSearchTextX = 30, bindingSearchTextY = 28;
     protected GuiTextField bindingSearchField;
@@ -37,7 +35,7 @@ public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKe
 
     @Override public void initGui() {
         screenTitle = titleStrSupplier.get();
-        keyBindingList = new MyKeyBindingList(this, mc, contents, width + 45, height, 50, height - 32);
+        keyBindingList = new MyKeyBindingList(mc, contents, width + 45, height, 50, height - 32);
         addButton(new GuiButton(-10000, width / 2 - 100, height - 29, I18n.format("gui.done")));
         bindingSearchText = I18n.format("controlskb.search_keybinding");
         int fieldX = bindingSearchTextX + fontRenderer.getStringWidth(bindingSearchText) + 10;
@@ -63,14 +61,6 @@ public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKe
         super.handleKeyboardInput();
     }
 
-    @Override public KeyBinding getSelectingKeyBinding() {return selectingKeyBinding;}
-
-    @Override public void setSelectingKeyBinding(KeyBinding kb) {selectingKeyBinding = kb;}
-
-    @Override public void onKeyBindingChanged() {
-        KeyBinding.resetKeyBindingArrayAndHash();
-    }
-
     @Override public void handleMouseInput() throws IOException {
         super.handleMouseInput();
         keyBindingList.handleMouseInput();
@@ -82,49 +72,35 @@ public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKe
     }
 
     @Override protected void mouseClicked(int mouseX, int mouseY, int mouseButton) throws IOException {
-        if (selectingKeyBinding != null) {
-            selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), mouseButton - 100);
-            onKeyBindingChanged();
-            selectingKeyBinding = null;
-        } else if (mouseButton != 0 || !keyBindingList.mouseClicked(mouseX, mouseY, mouseButton)) {
+        if (!keyBindingList.mouseClicked(mouseX, mouseY, mouseButton)) {
             super.mouseClicked(mouseX, mouseY, mouseButton);
             bindingSearchField.mouseClicked(mouseX, mouseY, mouseButton);
         }
     }
 
     @Override protected void mouseReleased(int mouseX, int mouseY, int state) {
-        if (state != 0 || !keyBindingList.mouseClicked(mouseX, mouseY, state))
+        if (state != 0 || !keyBindingList.mouseReleased(mouseX, mouseY, state))
             super.mouseReleased(mouseX, mouseY, state);
     }
 
     @Override protected void keyTyped(char typedChar, int keyCode) {
         if (bindingSearchField.textboxKeyTyped(typedChar, keyCode)) {
             String text = bindingSearchField.getText().trim();
-            keyBindingList = new MyKeyBindingList(
-                    this, mc,
-                    text.isEmpty()
-                            ? contents
-                            : contents.stream()
-                                      .filter(kb -> containsIgnoreCase(I18n.format(kb.getKeyDescription()), text)
-                                              || containsIgnoreCase(I18n.format(kb.getKeyCategory()), text))
-                                      .collect(Collectors.toSet()),
-                    width + 45, height, 50, height - 32
-            );
-        } else if (selectingKeyBinding != null) {
-            if (keyCode == Keyboard.KEY_ESCAPE)
-                selectingKeyBinding.setKeyModifierAndCode(KeyModifier.NONE, 0);
-            else if (keyCode != 0)
-                selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), keyCode);
-            else if (typedChar > 0)
-                selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), typedChar + 256);
-            if (!KeyModifier.isKeyCodeModifier(keyCode))
-                selectingKeyBinding = null;
-            onKeyBindingChanged();
-        } else {
+            List<KeyBinding> listContent;
+            if (text.isEmpty()) {
+                listContent = contents;
+            } else {
+                listContent = new ArrayList<>();
+                for (KeyBinding kb : contents)
+                    if (containsIgnoreCase(I18n.format(kb.getKeyDescription()), text)
+                            || containsIgnoreCase(I18n.format(kb.getKeyCategory()), text))
+                        listContent.add(kb);
+            } //TODO: don't new MyKeyBindingList, but add a method setContents in that class and call it
+            keyBindingList = new MyKeyBindingList(mc, listContent, width + 45, height, 50, height - 32);
+        } else if (!keyBindingList.keyTyped(typedChar, keyCode)) {
             if (keyCode == Keyboard.KEY_ESCAPE)
                 quitScreen();
         }
-        keyBindingList.onKeyTyped();
     }
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {

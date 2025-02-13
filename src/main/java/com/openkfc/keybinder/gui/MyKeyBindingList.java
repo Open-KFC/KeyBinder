@@ -6,32 +6,24 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.client.settings.KeyModifier;
 import org.lwjgl.input.Keyboard;
 
 import java.util.*;
 
 public class MyKeyBindingList extends GuiListExtended {
-    public interface IKeyBindingListContainer {
-        KeyBinding getSelectingKeyBinding();
-
-        void setSelectingKeyBinding(KeyBinding kb);
-
-        void onKeyBindingChanged();
-    }
-
-    protected IKeyBindingListContainer container;
     protected List<KeyBinding> keyBindings;
     protected final IGuiListEntry[] entries;
     protected int maxLabelTextWidth;
-    protected long lastClickTime;
+    protected KeyBinding selectingKeyBinding;
 
     public MyKeyBindingList(
-            IKeyBindingListContainer container, Minecraft mcIn, Collection<? extends KeyBinding> keyBindingsIn,
+            Minecraft mcIn, Collection<? extends KeyBinding> keyBindingsIn,
             int widthIn, int heightIn, int topIn, int bottomIn
     ) {
         super(mcIn, widthIn, heightIn, topIn, bottomIn, 20);
-        this.container = container;
-        keyBindings = new ArrayList<>(keyBindingsIn);
+        keyBindings = new ArrayList<>();
+        keyBindings.addAll(keyBindingsIn);
         keyBindings.sort(KeyBinding::compareTo);
         List<IGuiListEntry> entryList = new ArrayList<>();
         String curCatrgory = null;
@@ -62,18 +54,47 @@ public class MyKeyBindingList extends GuiListExtended {
      * call before super.handleKeyboardInput()
      */
     public void handleKeyboardInput() {
-        if (!Keyboard.isRepeatEvent() && !Keyboard.getEventKeyState()) {
-            if (lastClickTime <= Minecraft.getSystemTime() - 20)
-                container.setSelectingKeyBinding(null);
+        if (selectingKeyBinding != null && !Keyboard.isRepeatEvent() && !Keyboard.getEventKeyState()) { //on key release
+            selectingKeyBinding = null;
+            onKeyBindingChanged();
         }
     }
 
-    /**
-     * call after keyTyped(char, int) handle logic
-     */
-    public void onKeyTyped() {
-        if (container.getSelectingKeyBinding() != null)
-            lastClickTime = Minecraft.getSystemTime();
+    public boolean keyTyped(char typedChar, int keyCode) {
+        if (selectingKeyBinding == null)
+            return false;
+        if (keyCode == Keyboard.KEY_ESCAPE)
+            selectingKeyBinding.setKeyModifierAndCode(KeyModifier.NONE, 0);
+        else if (keyCode != 0)
+            selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), keyCode);
+        else if (typedChar > 0)
+            selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), typedChar + 256);
+        else
+            return false;
+        onKeyBindingChanged();
+        return true;
+    }
+
+    @Override public boolean mouseClicked(int mouseX, int mouseY, int mouseEvent) {
+        if (selectingKeyBinding != null) {
+            selectingKeyBinding.setKeyModifierAndCode(KeyModifier.getActiveModifier(), mouseEvent - 100);
+            selectingKeyBinding = null;
+            onKeyBindingChanged();
+            return true;
+        } else {
+            return super.mouseClicked(mouseX, mouseY, mouseEvent);
+        }
+    }
+
+    protected void onKeyBindingChanged() {
+        KeyBinding.resetKeyBindingArrayAndHash();
+        for (IGuiListEntry entry : entries)
+            if (entry instanceof IGuiKeyBindingListEntry)
+                ((IGuiKeyBindingListEntry) entry).onKeyBindingChanged();
+    }
+
+    public interface IGuiKeyBindingListEntry {
+        void onKeyBindingChanged();
     }
 
     public class CategoryEntry implements IGuiListEntry {
@@ -101,7 +122,7 @@ public class MyKeyBindingList extends GuiListExtended {
         @Override public void updatePosition(int slotIndex, int x, int y, float partialTicks) {}
     }
 
-    public class KeyEntry implements IGuiListEntry {
+    public class KeyEntry implements IGuiListEntry, IGuiKeyBindingListEntry {
         protected final KeyBinding keyBinding;
         protected final String desc;
         protected final GuiButton btnChangeKeyBinding;
@@ -112,20 +133,11 @@ public class MyKeyBindingList extends GuiListExtended {
             desc = I18n.format(keyBinding.getKeyDescription());
             btnChangeKeyBinding = new GuiButton(0, 0, 0, 95, 20, keyBinding.getDisplayName());
             btnReset = new GuiButton(1, 0, 0, 50, 20, I18n.format("controls.reset"));
+            onKeyBindingChanged();
         }
 
-        @Override public void drawEntry(
-                int slotIndex,
-                int x, int y, int listWidth, int slotHeight,
-                int mouseX, int mouseY, boolean isSelected, float partialTicks
-        ) {
-            mc.fontRenderer.drawString(desc, x + 90 - maxLabelTextWidth, y + (slotHeight - 4) / 2, 0xFFFFFF);
-            btnReset.x = x + 210;
-            btnReset.y = y;
+        @Override public void onKeyBindingChanged() {
             btnReset.enabled = !keyBinding.isSetToDefaultValue();
-            btnReset.drawButton(mc, mouseX, mouseY, partialTicks);
-            btnChangeKeyBinding.x = x + 105;
-            btnChangeKeyBinding.y = y;
             boolean codeConflict = false, modifierConfilict = true;
             if (keyBinding.getKeyCode() != 0) {
                 for (KeyBinding kb : keyBindings) {
@@ -135,7 +147,7 @@ public class MyKeyBindingList extends GuiListExtended {
                     }
                 }
             }
-            if (container.getSelectingKeyBinding() == keyBinding) {
+            if (selectingKeyBinding == keyBinding) {
                 btnChangeKeyBinding.displayString =
                         TextFormatting.WHITE + "> " +
                                 TextFormatting.YELLOW + keyBinding.getDisplayName() +
@@ -146,6 +158,19 @@ public class MyKeyBindingList extends GuiListExtended {
             } else {
                 btnChangeKeyBinding.displayString = keyBinding.getDisplayName();
             }
+        }
+
+        @Override public void drawEntry(
+                int slotIndex,
+                int x, int y, int listWidth, int slotHeight,
+                int mouseX, int mouseY, boolean isSelected, float partialTicks
+        ) {
+            mc.fontRenderer.drawString(desc, x + 90 - maxLabelTextWidth, y + (slotHeight - 4) / 2, 0xFFFFFF);
+            btnReset.x = x + 210;
+            btnReset.y = y;
+            btnReset.drawButton(mc, mouseX, mouseY, partialTicks);
+            btnChangeKeyBinding.x = x + 105;
+            btnChangeKeyBinding.y = y;
             btnChangeKeyBinding.drawButton(mc, mouseX, mouseY, partialTicks);
         }
 
@@ -155,11 +180,12 @@ public class MyKeyBindingList extends GuiListExtended {
                 int relativeX, int relativeY
         ) {
             if (btnChangeKeyBinding.mousePressed(mc, mouseX, mouseY)) {
-                container.setSelectingKeyBinding(keyBinding);
+                selectingKeyBinding = keyBinding;
+                onKeyBindingChanged();
                 return true;
             } else if (btnReset.mousePressed(mc, mouseX, mouseY)) {
                 keyBinding.setToDefault();
-                container.onKeyBindingChanged();
+                MyKeyBindingList.this.onKeyBindingChanged();
                 return true;
             } else {
                 return false;
