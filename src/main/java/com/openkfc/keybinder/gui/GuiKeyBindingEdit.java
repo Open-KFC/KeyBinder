@@ -58,6 +58,11 @@ public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKe
         }
     }
 
+    @Override public void handleKeyboardInput() throws IOException {
+        keyBindingList.handleKeyboardInput();
+        super.handleKeyboardInput();
+    }
+
     @Override public KeyBinding getSelectingKeyBinding() {return selectingKeyBinding;}
 
     @Override public void setSelectingKeyBinding(KeyBinding kb) {selectingKeyBinding = kb;}
@@ -119,6 +124,7 @@ public class GuiKeyBindingEdit extends GuiScreen implements MyKeyBindingList.IKe
             if (keyCode == Keyboard.KEY_ESCAPE)
                 quitScreen();
         }
+        keyBindingList.onKeyTyped();
     }
 
     @Override public void drawScreen(int mouseX, int mouseY, float partialTicks) {

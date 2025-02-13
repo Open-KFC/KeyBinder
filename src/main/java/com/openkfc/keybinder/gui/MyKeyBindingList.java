@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.resources.I18n;
 import net.minecraft.client.settings.KeyBinding;
 import net.minecraft.util.text.TextFormatting;
+import org.lwjgl.input.Keyboard;
 
 import java.util.*;
 
@@ -22,6 +23,7 @@ public class MyKeyBindingList extends GuiListExtended {
     protected List<KeyBinding> keyBindings;
     protected final IGuiListEntry[] entries;
     protected int maxLabelTextWidth;
+    protected long lastClickTime;
 
     public MyKeyBindingList(
             IKeyBindingListContainer container, Minecraft mcIn, Collection<? extends KeyBinding> keyBindingsIn,
@@ -55,6 +57,24 @@ public class MyKeyBindingList extends GuiListExtended {
     protected int getScrollBarX() {return super.getScrollBarX() + 35;}
 
     public int getListWidth() {return super.getListWidth() + 32;}
+
+    /**
+     * call before super.handleKeyboardInput()
+     */
+    public void handleKeyboardInput() {
+        if (!Keyboard.isRepeatEvent() && !Keyboard.getEventKeyState()) {
+            if (lastClickTime <= Minecraft.getSystemTime() - 20)
+                container.setSelectingKeyBinding(null);
+        }
+    }
+
+    /**
+     * call after keyTyped(char, int) handle logic
+     */
+    public void onKeyTyped() {
+        if (container.getSelectingKeyBinding() != null)
+            lastClickTime = Minecraft.getSystemTime();
+    }
 
     public class CategoryEntry implements IGuiListEntry {
         protected final String text;
