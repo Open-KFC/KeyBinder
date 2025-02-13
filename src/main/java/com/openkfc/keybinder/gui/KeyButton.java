@@ -17,6 +17,8 @@ import org.lwjgl.opengl.GL11;
 
 import java.util.*;
 
+import static org.apache.commons.lang3.StringUtils.containsIgnoreCase;
+
 @SuppressWarnings("NullableProblems")
 public class KeyButton extends GuiButton {
     protected final GuiScreen screen;
@@ -83,7 +85,7 @@ public class KeyButton extends GuiButton {
             return;
         }
         for (String kbn : keyBindingsNames) {
-            if (kbn.toLowerCase().contains(searchBoxStr.toLowerCase())) {
+            if (containsIgnoreCase(kbn, searchBoxStr)) {
                 highlight = true;
                 return;
             }
