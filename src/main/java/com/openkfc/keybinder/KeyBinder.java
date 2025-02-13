@@ -19,7 +19,7 @@ import static com.openkfc.keybinder.KeyBinder.*;
 )
 public class KeyBinder {
 
-    public static final String MODID = "keybinder", NAME = "KeyBinder", VERSION = "0.1.1";
+    public static final String MODID = "keybinder", NAME = "KeyBinder", VERSION = "0.1.2";
 
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {

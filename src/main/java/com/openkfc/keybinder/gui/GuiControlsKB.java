@@ -1,9 +1,9 @@
 package com.openkfc.keybinder.gui;
 
 import com.google.common.collect.ImmutableMap;
+import com.openkfc.keybinder.gui.util.AlphanumericKeyButtonsInitializer;
 import com.openkfc.keybinder.gui.util.KeyButtonsInitializer;
 import com.openkfc.keybinder.gui.util.OtherKeyButtonsInitializer;
-import com.openkfc.keybinder.gui.util.AlphanumericKeyButtonsInitializer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
