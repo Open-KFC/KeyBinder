@@ -84,8 +84,8 @@ public class KeyButton extends GuiButton {
             highlight = false;
             return;
         }
-        for (String kbn : keyBindingsNames) {
-            if (containsIgnoreCase(kbn, searchBoxStr)) {
+        for (int i = 1; i < keyBindingsNames.size(); i++) {
+            if (containsIgnoreCase(keyBindingsNames.get(i), searchBoxStr)) {
                 highlight = true;
                 return;
             }
