@@ -22,10 +22,15 @@ import org.lwjgl.opengl.GL11;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
 
 //TODO: revice logics
 public class GuiControlsKB extends GuiScreen {
     public enum ContentType {ALPHANUMERIC, OTHER_KEYS}
+
+    protected static final int RESET_ALL = 10000, UNDO = 10001, DONE = 10002, OTHER_SETTINGS = 10003,
+            OTHER_KEYS = 10004, ALL_BINDINGS = 10005;
 
     protected final ImmutableMap<KeyBinding, ImmutablePair<KeyModifier, Integer>> originalBindingStatus;
     protected GuiScreen parentScreen = Minecraft.getMinecraft().currentScreen;
@@ -69,19 +74,21 @@ public class GuiControlsKB extends GuiScreen {
         screenTitle = I18n.format("controls.title");
         initButtons();
         initTextField();
+        flushResetAndUndoButtonState();
     }
 
     protected void initButtons() {
-        //TODO: display reset btn and undo btn as disabled
         int btnWidth = (width - 70) / 3;
         int[] aX = new int[]{30, 30 + btnWidth + 5, 30 + 2 * (btnWidth + 5)};
         int[] aY = new int[]{height - 29, height - 54};
-        addButton(new GuiButton(10000, aX[0], aY[0], I18n.format("controls.resetAll"))).setWidth(btnWidth);
-        addButton(new GuiButton(10001, aX[1], aY[0], I18n.format("controlskb.undo"))).setWidth(btnWidth);
-        addButton(new GuiButton(10003, aX[2], aY[0], I18n.format("gui.done"))).setWidth(btnWidth);
-        addButton(new GuiButton(10004, aX[0], aY[1], I18n.format("controlskb.other_settings"))).setWidth(btnWidth);
-        addButton(new GuiButton(10005, aX[1], aY[1], I18n.format("controlskb.other_keys"))).setWidth(btnWidth);
-        addButton(new GuiButton(10006, aX[2], aY[1], I18n.format("controlskb.show_keybindings"))).setWidth(btnWidth);
+        addButton(new GuiButton(RESET_ALL, aX[0], aY[0], I18n.format("controls.resetAll"))).setWidth(btnWidth);
+        addButton(new GuiButton(UNDO, aX[1], aY[0], I18n.format("controlskb.undo"))).setWidth(btnWidth);
+        addButton(new GuiButton(DONE, aX[2], aY[0], I18n.format("gui.done"))).setWidth(btnWidth);
+        addButton(new GuiButton(OTHER_SETTINGS, aX[0], aY[1], I18n.format("controlskb.other_settings")))
+                .setWidth(btnWidth);
+        addButton(new GuiButton(OTHER_KEYS, aX[1], aY[1], I18n.format("controlskb.other_keys"))).setWidth(btnWidth);
+        addButton(new GuiButton(ALL_BINDINGS, aX[2], aY[1], I18n.format("controlskb.show_keybindings")))
+                .setWidth(btnWidth);
     }
 
     protected void initTextField() {
@@ -149,27 +156,29 @@ public class GuiControlsKB extends GuiScreen {
             return;
         }
         switch (button.id) {
-            case 10000: //reset all
+            case RESET_ALL:
                 for (KeyBinding kb : settings.keyBindings)
                     kb.setToDefault();
                 flushKeyBindings();
+                flushResetAndUndoButtonState();
                 break;
-            case 10001: //undo
+            case UNDO:
                 originalBindingStatus.forEach((kb, ip) -> kb.setKeyModifierAndCode(ip.left, ip.right));
                 flushKeyBindings();
+                flushResetAndUndoButtonState();
                 break;
-            case 10003: //done
+            case DONE:
                 quitScreen();
                 break;
-            case 10004: //other settings
+            case OTHER_SETTINGS:
                 mc.displayGuiScreen(new GuiOtherControlSettings(this));
                 break;
-            case 10005: //other keys
+            case OTHER_KEYS:
                 ContentType[] values = ContentType.values();
                 contentType = values[(contentType.ordinal() + 1) % values.length];
                 reInitOnDrawing = true;
                 break;
-            case 10006: //keybindings screen
+            case ALL_BINDINGS:
                 mc.displayGuiScreen(new GuiKeyBindingEdit(
                         this,
                         () -> I18n.format("controls.title"),
@@ -184,6 +193,38 @@ public class GuiControlsKB extends GuiScreen {
         for (GuiButton gb : buttonList)
             if (gb instanceof KeyButton)
                 ((KeyButton) gb).flushRelatedKeyBindings();
+    }
+
+    protected void flushResetAndUndoButtonState() {
+        boolean resetEnabled, undoEnabled;
+        resetEnabledCheck:
+        {
+            for (KeyBinding kb : settings.keyBindings) {
+                if (!kb.isSetToDefaultValue()) {
+                    resetEnabled = true;
+                    break resetEnabledCheck;
+                }
+            }
+            resetEnabled = false;
+        }
+        undoEnabledCheck:
+        {
+            for (Map.Entry<KeyBinding, ImmutablePair<KeyModifier, Integer>> entry : originalBindingStatus.entrySet()) {
+                if (entry.getKey().getKeyModifier() != entry.getValue().left
+                        || entry.getKey().getKeyCode() != entry.getValue().right
+                ) {
+                    undoEnabled = true;
+                    break undoEnabledCheck;
+                }
+            }
+            undoEnabled = false;
+        }
+        findButton(RESET_ALL).ifPresent((gb) -> gb.enabled = resetEnabled);
+        findButton(UNDO).ifPresent((gb) -> gb.enabled = undoEnabled);
+    }
+
+    protected Optional<GuiButton> findButton(int btnId) {
+        return buttonList.stream().filter((gb) -> gb.id == btnId).findFirst();
     }
 
     protected void quitScreen() {
