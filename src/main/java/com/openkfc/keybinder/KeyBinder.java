@@ -19,7 +19,7 @@ import static com.openkfc.keybinder.KeyBinder.*;
 )
 public class KeyBinder {
 
-    public static final String MODID = "keybinder", NAME = "KeyBinder", VERSION = "0.1.2";
+    public static final String MODID = "keybinder", NAME = "KeyBinder", VERSION = "0.1.3";
 
     @Mod.EventHandler
     public void onInit(FMLInitializationEvent event) {
@@ -28,7 +28,7 @@ public class KeyBinder {
 
     @SubscribeEvent(priority = EventPriority.HIGH)
     public static void onGuiOpen(GuiOpenEvent event) {
-        if (event.getGui().getClass() == GuiControls.class)
+        if (event.getGui() != null && event.getGui().getClass() == GuiControls.class)
             event.setGui(new GuiControlsKB());
     }
 
